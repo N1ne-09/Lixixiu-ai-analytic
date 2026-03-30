@@ -10,16 +10,36 @@ plt.rcParams['axes.unicode_minus'] = False
 st.set_page_config(page_title="AI数据分析工具", layout="wide")
 st.title("📊 AI 智能数据分析工具")
 
-# 侧边栏：输入 API Key
+#从Secrets读取API KEY
+if "api_key" in st.secrets:
+    API_KEY = st.secrest["api_key"]
+    api_ready =True
+else :
+    API_KEY = None
+    api_ready =False
+
 with st.sidebar:
-    st.header("⚙️ 设置")
-    api_key = st.text_input("智谱 API Key", type="password", help="输入你的智谱 API Key")
-    st.markdown("---")
-    st.markdown("### 使用说明")
-    st.markdown("1. 输入 API Key")
-    st.markdown("2. 上传 CSV 文件")
-    st.markdown("3. 点击分析按钮")
-    st.markdown("4. 查看统计、图表和 AI 建议")
+    st.header("⚙ 设置")
+    if api_ready:
+        st.success("AI分析已就绪(密钥已配置)")
+    else :
+        st.warning("❗ API key 未配置,AI分析不可用")
+        st.markdown("---")
+        st.markdown("### 使用说明")
+        st.markdown("1.上传CSV文件")
+        st.markdown("2.选择销售额和利润列")
+        st.markdown("3.点击分析按钮")
+        st.markdown("4.查看统计、图表和AI建议")
+# 侧边栏：输入 API Key
+#with st.sidebar:
+    #st.header("⚙️ 设置")
+    #api_key = st.text_input("智谱 API Key", type="password", help="输入你的智谱 API Key")
+    #st.markdown("---")
+    #st.markdown("### 使用说明")
+    #st.markdown("1. 输入 API Key")
+    #st.markdown("2. 上传 CSV 文件")
+    #st.markdown("3. 点击分析按钮")
+    #st.markdown("4. 查看统计、图表和 AI 建议")
 
 # 主区域：文件上传
 uploaded_file = st.file_uploader("上传 CSV 文件", type=['csv', 'xlsx'])
@@ -127,7 +147,8 @@ if uploaded_file is not None:
                     st.markdown("### 🤖 AI 分析建议")
                     st.info(response.choices[0].message.content)
             else:
-                st.warning("⚠️ 请在左侧输入 API Key 以获取 AI 分析")
+                st.warning("⚠️ AI分析不可用:未配置API key")
+                #st.warning("⚠️ 请在左侧输入 API Key 以获取 AI 分析")
     else:
         st.error("请确保数据包含至少两列数值型数据（如销售额、利润）")
 else:
