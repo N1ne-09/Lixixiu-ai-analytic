@@ -115,7 +115,7 @@ if uploaded_file is not None:
             st.pyplot(fig2)
 
             # AI 分析（如果有 API Key）
-            if api_key:
+            if API_key:
                 with st.spinner("🤖 AI 正在分析中..."):
                     client = OpenAI(
                         api_key=api_key,
