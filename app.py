@@ -12,7 +12,7 @@ st.title("📊 AI 智能数据分析工具")
 
 #从Secrets读取API KEY
 if "api_key" in st.secrets:
-    API_KEY = st.secrest["api_key"]
+    API_KEY = st.secrets["api_key"]
     api_ready =True
 else :
     API_KEY = None
