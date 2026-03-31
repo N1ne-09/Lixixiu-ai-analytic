@@ -10,68 +10,97 @@ plt.rcParams['axes.unicode_minus'] = False
 st.set_page_config(page_title="AI数据分析工具", layout="wide")
 st.title("📊 AI 智能数据分析工具")
 
-#从Secrets读取API KEY
-if "api_key" in st.secrets:
+# 获取 API Key（兼容本地和云端）
+if hasattr(st, 'secrets') and "api_key" in st.secrets:
+    # 云端运行：从 secrets 读取
     API_KEY = st.secrets["api_key"]
-    api_ready =True
-else :
+    api_ready = True
+else:
+    # 本地运行：让用户输入
     API_KEY = None
-    api_ready =False
+    api_ready = False
 
 with st.sidebar:
-    st.header("⚙ 设置")
+    st.header("⚙️ 设置")
     if api_ready:
-        st.success("AI分析已就绪(密钥已配置)")
-    else :
-        st.warning("❗ API key 未配置,AI分析不可用")
-        st.markdown("---")
-        st.markdown("### 使用说明")
-        st.markdown("1.上传CSV文件")
-        st.markdown("2.选择销售额和利润列")
-        st.markdown("3.点击分析按钮")
-        st.markdown("4.查看统计、图表和AI建议")
-# 侧边栏：输入 API Key
-#with st.sidebar:
-    #st.header("⚙️ 设置")
-    #api_key = st.text_input("智谱 API Key", type="password", help="输入你的智谱 API Key")
-    #st.markdown("---")
-    #st.markdown("### 使用说明")
-    #st.markdown("1. 输入 API Key")
-    #st.markdown("2. 上传 CSV 文件")
-    #st.markdown("3. 点击分析按钮")
-    #st.markdown("4. 查看统计、图表和 AI 建议")
+        st.success("✅ AI 分析已就绪")
+    else:
+        api_key_input = st.text_input("智谱 API Key", type="password", help="输入你的智谱 API Key")
+        if api_key_input:
+            API_KEY = api_key_input
+            api_ready = True
+            st.success("✅ API Key 已设置")
+        else:
+            st.warning("⚠️ 请输入 API Key 以使用 AI 分析")
+    st.markdown("---")
+    st.markdown("### 使用说明")
+    st.markdown("1. 上传 CSV 文件")
+    st.markdown("2. 选择销售额和利润列")
+    st.markdown("3. 点击分析按钮")
+    st.markdown("4. 查看统计、图表和 AI 建议")
+
+def read_file(uploaded_file):
+    """根据文件拓展名读取不同格式文件"""
+    file_name = upload_file.name.lower()
+
+    if file_name.endswith('.csv'):
+        #csv文件
+        try:
+            return pd.read_csv(upload_file,encoding='gbk')
+        except:
+            return pd.read_csv(upload_file,encoding='utf-8')
+    elif file_name.endswith('.xlsx'):
+        retun pd.rerad_excel(upload_file)
+    elif file_name.endswith('.xls'):
+        retun pd.rerad_excel(upload_file)
+    elif file_name.endswith('.xls'):
+        retun pd.rerad_excel(upload_file,engine='xlrd')
+    elif file_name.endswith('.json'):
+        data = json.load(upload_file)
+        retun pd.json_normalize(data)
+    elif file_name.endswith('.parquet'):
+        retun pd.rerad_parquet(upload_file)
+    elif file_name.endswith('.tsv'):
+        retun pd.rerad_csv(upload_file,sep='\t')
+    else:
+        st.error(f"不支持的文件格式:{fike_name}")
+
+        return None
+
+
+
 
 # 主区域：文件上传
 uploaded_file = st.file_uploader("上传 CSV 文件", type=['csv', 'xlsx'])
 
 if uploaded_file is not None:
     # 读取文件
-    if uploaded_file.name.endswith('.csv'):
-        df = pd.read_csv(uploaded_file, encoding='gbk')
-    else:
-        df = pd.read_excel(uploaded_file)
+    try:
+        if uploaded_file.name.endswith('.csv'):
+            df = pd.read_csv(uploaded_file, encoding='gbk')
+        else:
+            df = pd.read_excel(uploaded_file)
+    except Exception as e:
+        st.error(f"读取文件失败：{e}")
+        st.stop()
 
     st.success(f"✅ 成功读取文件，共 {len(df)} 行，{len(df.columns)} 列")
 
-    # 显示数据预览
     with st.expander("📋 数据预览"):
         st.dataframe(df.head(10))
 
-    # 选择数值列
     numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
     if len(numeric_cols) >= 2:
         col1 = st.selectbox("选择销售额列", numeric_cols, index=0)
         col2 = st.selectbox("选择利润列", numeric_cols, index=min(1, len(numeric_cols)-1))
 
         if st.button("🔍 开始分析", type="primary"):
-            # 计算统计
             total_sales = df[col1].sum()
             avg_sales = df[col1].mean()
             total_profit = df[col2].sum()
             avg_profit = df[col2].mean()
             max_month = df[df[col1] == df[col1].max()].iloc[0, 0] if len(df) > 0 else "无"
 
-            # 显示统计
             col_a, col_b, col_c, col_d = st.columns(4)
             with col_a:
                 st.metric("总销售额", f"{total_sales:,.0f}")
@@ -82,11 +111,9 @@ if uploaded_file is not None:
             with col_d:
                 st.metric("平均利润", f"{avg_profit:,.0f}")
 
-            # 画图
             fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
-
-            # 柱状图
             x_labels = df.iloc[:, 0].astype(str)
+
             ax1.bar(x_labels, df[col1], color='steelblue')
             ax1.set_title(f"{col1} 分布")
             ax1.set_xlabel("类别")
@@ -102,7 +129,6 @@ if uploaded_file is not None:
             plt.tight_layout()
             st.pyplot(fig)
 
-            # 折线图
             fig2, ax = plt.subplots(figsize=(10, 5))
             ax.plot(x_labels, df[col1], marker='o', label=col1, linewidth=2)
             ax.plot(x_labels, df[col2], marker='s', label=col2, linewidth=2)
@@ -114,15 +140,16 @@ if uploaded_file is not None:
             plt.xticks(rotation=45)
             st.pyplot(fig2)
 
-            # AI 分析（如果有 API Key）
-            if API_key:
+            # AI 分析（使用 API_KEY）
+            if api_ready and API_KEY:
                 with st.spinner("🤖 AI 正在分析中..."):
-                    client = OpenAI(
-                        api_key=api_key,
-                        base_url="https://open.bigmodel.cn/api/paas/v4/"
-                    )
+                    try:
+                        client = OpenAI(
+                            api_key=API_KEY,
+                            base_url="https://open.bigmodel.cn/api/paas/v4/"
+                        )
 
-                    data_summary = f"""
+                        data_summary = f"""
 数据明细：
 {df.to_string()}
 
@@ -136,19 +163,20 @@ if uploaded_file is not None:
 请根据以上数据，给出3条业务建议和分析洞察。
 """
 
-                    response = client.chat.completions.create(
-                        model="glm-4-flash",
-                        messages=[
-                            {"role": "system", "content": "你是一个专业的数据分析师"},
-                            {"role": "user", "content": data_summary}
-                        ]
-                    )
+                        response = client.chat.completions.create(
+                            model="glm-4-flash",
+                            messages=[
+                                {"role": "system", "content": "你是一个专业的数据分析师"},
+                                {"role": "user", "content": data_summary}
+                            ]
+                        )
 
-                    st.markdown("### 🤖 AI 分析建议")
-                    st.info(response.choices[0].message.content)
+                        st.markdown("### 🤖 AI 分析建议")
+                        st.info(response.choices[0].message.content)
+                    except Exception as e:
+                        st.error(f"AI 分析出错：{e}")
             else:
-                st.warning("⚠️ AI分析不可用:未配置API key")
-                #st.warning("⚠️ 请在左侧输入 API Key 以获取 AI 分析")
+                st.warning("⚠️ 请先在左侧输入 API Key 以获取 AI 分析")
     else:
         st.error("请确保数据包含至少两列数值型数据（如销售额、利润）")
 else:
