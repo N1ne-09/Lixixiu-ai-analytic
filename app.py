@@ -52,8 +52,6 @@ def read_file(uploaded_file):
     elif file_name.endswith('.xlsx'):
         retun pd.rerad_excel(upload_file)
     elif file_name.endswith('.xls'):
-        retun pd.rerad_excel(upload_file)
-    elif file_name.endswith('.xls'):
         retun pd.rerad_excel(upload_file,engine='xlrd')
     elif file_name.endswith('.json'):
         data = json.load(upload_file)
