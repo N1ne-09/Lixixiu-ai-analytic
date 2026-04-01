@@ -5,6 +5,7 @@ from openai import OpenAI
 import streamlit as st
 import json
 import os
+import numpy as np
 
 # 设置中文字体
 font_path = "NotoSansCJKsc-Regular.otf"
@@ -20,6 +21,7 @@ plt.rcParams['axes.unicode_minus'] = False
 st.set_page_config(page_title="AI数据分析工具", layout="wide")
 st.title("📊 AI 智能数据分析工具")
 
+# 获取 API Key
 if hasattr(st, 'secrets') and "api_key" in st.secrets:
     API_KEY = st.secrets["api_key"]
     api_ready = True
@@ -41,7 +43,10 @@ with st.sidebar:
             st.warning("⚠️ 请输入 API Key")
     st.markdown("---")
     st.markdown("### 使用说明")
-    st.markdown("1. 上传文件\n2. 选择列\n3. 选择图表\n4. 点击分析")
+    st.markdown("1. 上传文件")
+    st.markdown("2. 数据清洗（可选）")
+    st.markdown("3. 选择列和图表")
+    st.markdown("4. 点击分析")
 
 def read_file(uploaded_file):
     file_name = uploaded_file.name.lower()
@@ -66,6 +71,54 @@ def read_file(uploaded_file):
         st.error(f"不支持: {file_name}")
         return None
 
+def clean_data(df, options):
+    """数据清洗函数"""
+    df_clean = df.copy()
+    changes = []
+
+    # 1. 删除重复行
+    if options.get('remove_duplicates', False):
+        before = len(df_clean)
+        df_clean = df_clean.drop_duplicates()
+        after = len(df_clean)
+        if before > after:
+            changes.append(f"删除 {before - after} 行重复数据")
+
+    # 2. 处理缺失值
+    if options.get('handle_missing', 'none') != 'none':
+        missing_cols = df_clean.columns[df_clean.isnull().any()].tolist()
+        if missing_cols:
+            method = options['handle_missing']
+            if method == 'drop':
+                before = len(df_clean)
+                df_clean = df_clean.dropna()
+                after = len(df_clean)
+                changes.append(f"删除 {before - after} 行含缺失值的数据")
+            elif method == 'fill_zero':
+                df_clean = df_clean.fillna(0)
+                changes.append(f"将缺失值填充为 0")
+            elif method == 'fill_mean':
+                for col in df_clean.select_dtypes(include=['number']).columns:
+                    df_clean[col] = df_clean[col].fillna(df_clean[col].mean())
+                changes.append(f"将数值列缺失值填充为均值")
+
+    # 3. 删除异常值（基于 IQR）
+    if options.get('remove_outliers', False):
+        outlier_count = 0
+        for col in df_clean.select_dtypes(include=['number']).columns:
+            Q1 = df_clean[col].quantile(0.25)
+            Q3 = df_clean[col].quantile(0.75)
+            IQR = Q3 - Q1
+            lower = Q1 - 1.5 * IQR
+            upper = Q3 + 1.5 * IQR
+            before = len(df_clean)
+            df_clean = df_clean[(df_clean[col] >= lower) & (df_clean[col] <= upper)]
+            outlier_count += before - len(df_clean)
+        if outlier_count > 0:
+            changes.append(f"删除 {outlier_count} 行异常值")
+
+    return df_clean, changes
+
 uploaded_file = st.file_uploader("上传文件", type=['csv', 'xlsx', 'json', 'xls', 'parquet', 'tsv'])
 
 if uploaded_file is not None:
@@ -78,17 +131,53 @@ if uploaded_file is not None:
         st.stop()
 
     st.success(f"✅ 成功读取，共 {len(df)} 行，{len(df.columns)} 列")
-    st.info(f"📁 格式：{uploaded_file.name.split('.')[-1].upper()}")
 
-    with st.expander("📋 数据预览"):
+    with st.expander("📋 原始数据预览"):
         st.dataframe(df.head(10))
+
+    # 数据清洗选项
+    with st.expander("🧹 数据清洗选项"):
+        col1, col2 = st.columns(2)
+        with col1:
+            remove_duplicates = st.checkbox("删除重复行")
+            handle_missing = st.selectbox("处理缺失值", ["不处理", "删除含缺失值的行", "填充为 0", "填充为均值"])
+        with col2:
+            remove_outliers = st.checkbox("删除异常值（基于 IQR 方法）")
+
+        clean_options = {
+            'remove_duplicates': remove_duplicates,
+            'handle_missing': 'none' if handle_missing == "不处理" else 
+                              'drop' if handle_missing == "删除含缺失值的行" else
+                              'fill_zero' if handle_missing == "填充为 0" else 'fill_mean',
+            'remove_outliers': remove_outliers
+        }
+
+        if st.button("执行数据清洗"):
+            df, changes = clean_data(df, clean_options)
+            st.success("✅ 数据清洗完成")
+            if changes:
+                st.info("清洗记录：\n" + "\n".join([f"- {c}" for c in changes]))
+            else:
+                st.info("未发现需要清洗的数据")
+            with st.expander("📋 清洗后数据预览"):
+                st.dataframe(df.head(10))
+
+    # 显示数据统计
+    with st.expander("📊 数据统计"):
+        st.write("**基本信息**")
+        st.write(f"- 行数：{len(df)}")
+        st.write(f"- 列数：{len(df.columns)}")
+        st.write(f"- 缺失值总数：{df.isnull().sum().sum()}")
+        st.write(f"- 重复行数：{df.duplicated().sum()}")
+        st.write("**数值列统计**")
+        st.write(df.describe())
 
     numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
     if len(numeric_cols) >= 2:
-        col1 = st.selectbox("数值列 A", numeric_cols, index=0)
-        col2 = st.selectbox("数值列 B", numeric_cols, index=min(1, len(numeric_cols)-1))
+        col1 = st.selectbox("数值列 A（如销售额）", numeric_cols, index=0)
+        col2 = st.selectbox("数值列 B（如利润）", numeric_cols, index=min(1, len(numeric_cols)-1))
         all_cols = df.columns.tolist()
-        category_col = st.selectbox("类别列", all_cols, index=0)
+        category_col = st.selectbox("类别列（如月份、地区）", all_cols, index=0)
         chart_type = st.multiselect("图表", ["柱状图", "折线图", "饼图", "箱线图", "面积图"], default=["柱状图", "折线图"])
 
         if st.button("🔍 开始分析", type="primary"):
