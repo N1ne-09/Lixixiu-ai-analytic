@@ -50,16 +50,16 @@ def read_file(uploaded_file):
         except:
             return pd.read_csv(upload_file,encoding='utf-8')
     elif file_name.endswith('.xlsx'):
-        retun pd.rerad_excel(upload_file)
+        return pd.rerad_excel(upload_file)
     elif file_name.endswith('.xls'):
-        retun pd.rerad_excel(upload_file,engine='xlrd')
+        return pd.rerad_excel(upload_file,engine='xlrd')
     elif file_name.endswith('.json'):
         data = json.load(upload_file)
-        retun pd.json_normalize(data)
+        return pd.json_normalize(data)
     elif file_name.endswith('.parquet'):
-        retun pd.rerad_parquet(upload_file)
+        return pd.rerad_parquet(upload_file)
     elif file_name.endswith('.tsv'):
-        retun pd.rerad_csv(upload_file,sep='\t')
+        return pd.rerad_csv(upload_file,sep='\t')
     else:
         st.error(f"不支持的文件格式:{fike_name}")
 
