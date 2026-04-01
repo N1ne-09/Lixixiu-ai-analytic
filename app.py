@@ -90,30 +90,48 @@ if uploaded_file is not None:
         st.dataframe(df.head(10))
 
     numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
-    if len(numeric_cols) >= 2:
+    if len(numeric_cols) >= 1:
         col1 = st.selectbox("选择销售额列", numeric_cols, index=0)
         col2 = st.selectbox("选择利润列", numeric_cols, index=min(1, len(numeric_cols)-1))
 
-        if st.button("🔍 开始分析", type="primary"):
-            total_sales = df[col1].sum()
-            avg_sales = df[col1].mean()
-            total_profit = df[col2].sum()
-            avg_profit = df[col2].mean()
-            max_month = df[df[col1] == df[col1].max()].iloc[0, 0] if len(df) > 0 else "无"
+#选择类别列  
+        all+cols = df.columns.tolist()
+        category_col = st.selectbox("选择类别列(如月份,地区)",all_cols,index=0)
 
+#图表类型选择
+        charty_type =st.multieselect(
+            "选择要显示的图表",
+            ["柱状图","折线图","饼图","箱线图","面积图"]
+            default=["柱状图","折线图"]
+        )
+
+
+
+
+        if st.button("🔍 开始分析", type="primary"):
+            total_a = df[col1].sum()
+            avg_b = df[col1].mean()
+            total_b = df[col2].sum()
+            avg_b = df[col2].mean()
+            #max_month = df[df[col1] == df[col1].max()].iloc[0, 0] if len(df) > 0 else "无"
+
+#统计卡片
             col_a, col_b, col_c, col_d = st.columns(4)
             with col_a:
-                st.metric("总销售额", f"{total_sales:,.0f}")
+                st.metric(f"总{col1}", f"{total_a:,.0f}")
             with col_b:
-                st.metric("平均销售额", f"{avg_sales:,.0f}")
+                st.metric(f"平均{col1}", f"{avg_a:,.0f}")
             with col_c:
-                st.metric("总利润", f"{total_profit:,.0f}")
+                st.metric(f"总{col2}", f"{total_b:,.0f}")
             with col_d:
-                st.metric("平均利润", f"{avg_profit:,.0f}")
+                st.metric(f"平均{col2}", f"{avg_b:,.0f}")
 
+
+            #柱状图
+            if "柱状图" in chart_type:
+                st.subheader("📊 柱状图")
             fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
             x_labels = df.iloc[:, 0].astype(str)
-
             ax1.bar(x_labels, df[col1], color='steelblue')
             ax1.set_title(f"{col1} 分布")
             ax1.set_xlabel("类别")
@@ -125,11 +143,15 @@ if uploaded_file is not None:
             ax2.set_xlabel("类别")
             ax2.set_ylabel(col2)
             ax2.tick_params(axis='x', rotation=45)
-
             plt.tight_layout()
             st.pyplot(fig)
 
-            fig2, ax = plt.subplots(figsize=(10, 5))
+
+            #折线图
+            if "折线图" in chart_type:
+                st.subheader("📈 折线图")
+            fig, ax = plt.subplots(figsize=(10, 5))
+            x_labels = df[category_col].astype(str)
             ax.plot(x_labels, df[col1], marker='o', label=col1, linewidth=2)
             ax.plot(x_labels, df[col2], marker='s', label=col2, linewidth=2)
             ax.set_title("趋势对比")
@@ -138,7 +160,56 @@ if uploaded_file is not None:
             ax.legend()
             ax.grid(True, linestyle='--', alpha=0.7)
             plt.xticks(rotation=45)
-            st.pyplot(fig2)
+            st.pyplot(fig)
+
+
+
+            # 饼图
+            if "饼图" in chart_type:
+                st.subheader("🥧 饼图")
+                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+                x_labels = df[category_col].astype(str)
+
+                ax1.pie(df[col1], labels=x_labels, autopct='%1.1f%%')
+                ax1.set_title(f"{col1} 占比")
+
+                ax2.pie(df[col2], labels=x_labels, autopct='%1.1f%%')
+                ax2.set_title(f"{col2} 占比")
+
+                st.pyplot(fig)
+
+            # 箱线图
+            if "箱线图" in chart_type:
+                st.subheader("📦 箱线图（数据分布）")
+                fig, ax = plt.subplots(figsize=(10, 5))
+                data_to_plot = [df[col1], df[col2]]
+                bp = ax.boxplot(data_to_plot, labels=[col1, col2], patch_artist=True)
+                bp['boxes'][0].set_facecolor('steelblue')
+                bp['boxes'][1].set_facecolor('coral')
+                ax.set_title("数据分布对比")
+                ax.set_ylabel("金额")
+                ax.grid(True, linestyle='--', alpha=0.7)
+                st.pyplot(fig)
+
+            # 面积图
+            if "面积图" in chart_type:
+                st.subheader("📊 面积图（累积趋势）")
+                fig, ax = plt.subplots(figsize=(10, 5))
+                x_labels = df[category_col].astype(str)
+                ax.fill_between(range(len(x_labels)), df[col1], alpha=0.5, label=col1, color='steelblue')
+                ax.fill_between(range(len(x_labels)), df[col2], alpha=0.5, label=col2, color='coral')
+                ax.plot(range(len(x_labels)), df[col1], marker='o', color='steelblue')
+                ax.plot(range(len(x_labels)), df[col2], marker='s', color='coral')
+                ax.set_xticks(range(len(x_labels)))
+                ax.set_xticklabels(x_labels, rotation=45)
+                ax.set_title("累积趋势对比")
+                ax.set_xlabel(category_col)
+                ax.set_ylabel("金额")
+                ax.legend()
+                ax.grid(True, linestyle='--', alpha=0.7)
+                st.pyplot(fig)
+
+
 
             # AI 分析（使用 API_KEY）
             if api_ready and API_KEY:
