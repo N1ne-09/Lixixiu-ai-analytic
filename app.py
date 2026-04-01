@@ -99,7 +99,7 @@ if uploaded_file is not None:
         category_col = st.selectbox("选择类别列(如月份,地区)",all_cols,index=0)
 
 #图表类型选择
-        charty_type =st.multiselect(
+        chart_type =st.multiselect(
             "选择要显示的图表",
             ["柱状图","折线图","饼图","箱线图","面积图"]
             default=["柱状图","折线图"]
