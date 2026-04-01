@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from openai import OpenAI
 import streamlit as st
+import json
 
 # 设置中文字体
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei']
@@ -39,29 +40,29 @@ with st.sidebar:
     st.markdown("3. 点击分析按钮")
     st.markdown("4. 查看统计、图表和 AI 建议")
 
-def read_file(upload_file):
+def read_file(uploaded_file):
     """根据文件拓展名读取不同格式文件"""
-    file_name = upload_file.name.lower()
+    file_name = uploaded_file.name.lower()
 
     if file_name.endswith('.csv'):
         #csv文件
         try:
-            return pd.read_csv(upload_file,encoding='gbk')
+            return pd.read_csv(uploaded_file,encoding='gbk')
         except:
-            return pd.read_csv(upload_file,encoding='utf-8')
+            return pd.read_csv(uploaded_file,encoding='utf-8')
     elif file_name.endswith('.xlsx'):
-        return pd.rerad_excel(upload_file)
+        return pd.read_excel(uploaded_file)
     elif file_name.endswith('.xls'):
-        return pd.rerad_excel(upload_file,engine='xlrd')
+        return pd.read_excel(uploaded_file,engine='xlrd')
     elif file_name.endswith('.json'):
-        data = json.load(upload_file)
+        data = json.load(uploaded_file)
         return pd.json_normalize(data)
     elif file_name.endswith('.parquet'):
-        return pd.rerad_parquet(upload_file)
+        return pd.read_parquet(uploaded_file)
     elif file_name.endswith('.tsv'):
-        return pd.rerad_csv(upload_file,sep='\t')
+        return pd.read_csv(uploaded_file,sep='\t')
     else:
-        st.error(f"不支持的文件格式:{fike_name}")
+        st.error(f"不支持的文件格式:{file_name}")
 
         return None
 
@@ -69,15 +70,14 @@ def read_file(upload_file):
 
 
 # 主区域：文件上传
-uploaded_file = st.file_uploader("上传 CSV 文件", type=['csv', 'xlsx'])
+uploaded_file = st.file_uploader("上传 CSV 文件", type=['csv', 'xlsx','json','xls','parquet','tsv'])
 
 if uploaded_file is not None:
-    # 读取文件
+    # 读取文件使用read_file读取各种文件
     try:
-        if uploaded_file.name.endswith('.csv'):
-            df = pd.read_csv(uploaded_file, encoding='gbk')
-        else:
-            df = pd.read_excel(uploaded_file)
+        df = read_file(uploaded_file)
+        if df is None:
+            st.stop
     except Exception as e:
         st.error(f"读取文件失败：{e}")
         st.stop()
