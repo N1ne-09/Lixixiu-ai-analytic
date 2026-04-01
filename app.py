@@ -101,7 +101,7 @@ if uploaded_file is not None:
 #图表类型选择
         chart_type =st.multiselect(
             "选择要显示的图表",
-            ["柱状图","折线图","饼图","箱线图","面积图"]
+            ["柱状图","折线图","饼图","箱线图","面积图"],
             default=["柱状图","折线图"]
         )
 
