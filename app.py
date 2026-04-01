@@ -200,8 +200,12 @@ if uploaded_file is not None:
                 ax.fill_between(range(len(x_labels)), df[col2], alpha=0.5, label=col2, color='coral')
                 ax.plot(range(len(x_labels)), df[col1], marker='o', color='steelblue')
                 ax.plot(range(len(x_labels)), df[col2], marker='s', color='coral')
-                ax.set_xticks(range(len(x_labels)))
-                ax.set_xticklabels(x_labels, rotation=45)
+
+
+                ax.set_xticks(range(x_pos))
+                ax.set_xticklabels(x_labels, rotation=45,ha='right')
+
+
                 ax.set_title("累积趋势对比")
                 ax.set_xlabel(category_col)
                 ax.set_ylabel("金额")
