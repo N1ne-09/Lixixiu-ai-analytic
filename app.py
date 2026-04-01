@@ -6,32 +6,53 @@ import json
 import os
 import matplotlib.font_manager as fm
 
-# ========== 中文字体设置（修复 Cloud 环境方框问题）==========
-# 获取一个可用的中文字体对象（用于显式指定）
+# ========== 强制中文字体设置（终极方案）==========
+# 方法1：尝试多个可能的字体文件路径
+font_paths = [
+    '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc',  # 文泉驿微米黑
+    '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc',    # 文泉驿正黑
+    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',  # DejaVu
+    '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+]
+
 chinese_font = None
-try:
-    # 尝试获取系统中的中文字体
-    font_names = ['SimHei', 'Microsoft YaHei', 'PingFang SC', 'WenQuanYi Zen Hei', 'Noto Sans CJK SC']
+font_loaded = False
+
+# 遍历所有可能的字体路径
+for font_path in font_paths:
+    if os.path.exists(font_path):
+        try:
+            fm.fontManager.addfont(font_path)
+            chinese_font = fm.FontProperties(fname=font_path)
+            plt.rcParams['font.family'] = chinese_font.get_name()
+            plt.rcParams['axes.unicode_minus'] = False
+            font_loaded = True
+            print(f"✅ 成功加载字体: {font_path}")
+            break
+        except Exception as e:
+            print(f"加载 {font_path} 失败: {e}")
+
+# 如果没有找到字体文件，尝试使用字体名称
+if not font_loaded:
+    font_names = ['WenQuanYi Micro Hei', 'WenQuanYi Zen Hei', 'Noto Sans CJK SC', 'SimHei', 'DejaVu Sans']
     for font_name in font_names:
         try:
             chinese_font = fm.FontProperties(family=font_name)
-            print(f"✅ 使用字体: {font_name}")
+            plt.rcParams['font.family'] = font_name
+            plt.rcParams['axes.unicode_minus'] = False
+            font_loaded = True
+            print(f"✅ 使用字体名称: {font_name}")
             break
         except:
             continue
 
-    # 如果上面都没找到，尝试加载文泉驿字体文件
-    if chinese_font is None:
-        wqy_path = '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc'
-        if os.path.exists(wqy_path):
-            fm.fontManager.addfont(wqy_path)
-            chinese_font = fm.FontProperties(fname=wqy_path)
-            print(f"✅ 加载字体文件: {wqy_path}")
-except Exception as e:
-    print(f"字体加载失败: {e}")
+# 如果还是不行，强制设置字体（最后一个备选）
+if not font_loaded:
+    plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
+    plt.rcParams['axes.unicode_minus'] = False
+    print("⚠️ 使用默认字体")
 
-# 设置全局默认字体
-plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans CJK SC', 'WenQuanYi Zen Hei', 'DejaVu Sans']
+# 设置全局字体
 plt.rcParams['axes.unicode_minus'] = False
 
 st.set_page_config(page_title="AI数据分析工具", layout="wide")
@@ -39,11 +60,9 @@ st.title("📊 AI 智能数据分析工具")
 
 # 获取 API Key（兼容本地和云端）
 if hasattr(st, 'secrets') and "api_key" in st.secrets:
-    # 云端运行：从 secrets 读取
     API_KEY = st.secrets["api_key"]
     api_ready = True
 else:
-    # 本地运行：让用户输入
     API_KEY = None
     api_ready = False
 
@@ -71,7 +90,6 @@ def read_file(uploaded_file):
     file_name = uploaded_file.name.lower()
 
     if file_name.endswith('.csv'):
-        # csv文件
         try:
             return pd.read_csv(uploaded_file, encoding='gbk')
         except:
@@ -97,7 +115,6 @@ def read_file(uploaded_file):
 uploaded_file = st.file_uploader("上传数据文件", type=['csv', 'xlsx', 'json', 'xls', 'parquet', 'tsv'])
 
 if uploaded_file is not None:
-    # 读取文件使用read_file读取各种文件
     try:
         df = read_file(uploaded_file)
         if df is None:
@@ -116,11 +133,9 @@ if uploaded_file is not None:
         col1 = st.selectbox("选择销售额列", numeric_cols, index=0)
         col2 = st.selectbox("选择利润列", numeric_cols, index=min(1, len(numeric_cols)-1))
 
-        # 选择类别列  
         all_cols = df.columns.tolist()
         category_col = st.selectbox("选择类别列(如月份,地区)", all_cols, index=0)
 
-        # 图表类型选择
         chart_type = st.multiselect(
             "选择要显示的图表",
             ["柱状图", "折线图", "饼图", "箱线图", "面积图"],
@@ -134,7 +149,6 @@ if uploaded_file is not None:
             avg_b = df[col2].mean()
             max_month = df[df[col1] == df[col1].max()].iloc[0, 0] if len(df) > 0 else "无"
 
-            # 统计卡片
             col_a, col_b, col_c, col_d = st.columns(4)
             with col_a:
                 st.metric(f"总{col1}", f"{total_a:,.0f}")
@@ -151,21 +165,16 @@ if uploaded_file is not None:
                 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
                 x_labels = df.iloc[:, 0].astype(str)
                 ax1.bar(x_labels, df[col1], color='steelblue')
-                ax1.set_title(f"{col1} 分布", fontproperties=chinese_font)
-                ax1.set_xlabel("类别", fontproperties=chinese_font)
-                ax1.set_ylabel(col1, fontproperties=chinese_font)
+                ax1.set_title(f"{col1} 分布")
+                ax1.set_xlabel("类别")
+                ax1.set_ylabel(col1)
                 ax1.tick_params(axis='x', rotation=45)
-                for label in ax1.get_xticklabels():
-                    label.set_fontproperties(chinese_font)
 
                 ax2.bar(x_labels, df[col2], color='coral')
-                ax2.set_title(f"{col2} 分布", fontproperties=chinese_font)
-                ax2.set_xlabel("类别", fontproperties=chinese_font)
-                ax2.set_ylabel(col2, fontproperties=chinese_font)
+                ax2.set_title(f"{col2} 分布")
+                ax2.set_xlabel("类别")
+                ax2.set_ylabel(col2)
                 ax2.tick_params(axis='x', rotation=45)
-                for label in ax2.get_xticklabels():
-                    label.set_fontproperties(chinese_font)
-
                 plt.tight_layout()
                 st.pyplot(fig)
 
@@ -176,14 +185,12 @@ if uploaded_file is not None:
                 x_labels = df[category_col].astype(str)
                 ax.plot(x_labels, df[col1], marker='o', label=col1, linewidth=2)
                 ax.plot(x_labels, df[col2], marker='s', label=col2, linewidth=2)
-                ax.set_title("趋势对比", fontproperties=chinese_font)
-                ax.set_xlabel("类别", fontproperties=chinese_font)
-                ax.set_ylabel("金额", fontproperties=chinese_font)
-                ax.legend(prop=chinese_font)
+                ax.set_title("趋势对比")
+                ax.set_xlabel("类别")
+                ax.set_ylabel("金额")
+                ax.legend()
                 ax.grid(True, linestyle='--', alpha=0.7)
                 plt.xticks(rotation=45)
-                for label in ax.get_xticklabels():
-                    label.set_fontproperties(chinese_font)
                 st.pyplot(fig)
 
             # 饼图
@@ -192,15 +199,11 @@ if uploaded_file is not None:
                 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
                 x_labels = df[category_col].astype(str)
 
-                patches1, texts1, autotexts1 = ax1.pie(df[col1], labels=x_labels, autopct='%1.1f%%')
-                ax1.set_title(f"{col1} 占比", fontproperties=chinese_font)
-                for text in texts1:
-                    text.set_fontproperties(chinese_font)
+                ax1.pie(df[col1], labels=x_labels, autopct='%1.1f%%')
+                ax1.set_title(f"{col1} 占比")
 
-                patches2, texts2, autotexts2 = ax2.pie(df[col2], labels=x_labels, autopct='%1.1f%%')
-                ax2.set_title(f"{col2} 占比", fontproperties=chinese_font)
-                for text in texts2:
-                    text.set_fontproperties(chinese_font)
+                ax2.pie(df[col2], labels=x_labels, autopct='%1.1f%%')
+                ax2.set_title(f"{col2} 占比")
 
                 st.pyplot(fig)
 
@@ -212,11 +215,9 @@ if uploaded_file is not None:
                 bp = ax.boxplot(data_to_plot, labels=[col1, col2], patch_artist=True)
                 bp['boxes'][0].set_facecolor('steelblue')
                 bp['boxes'][1].set_facecolor('coral')
-                ax.set_title("数据分布对比", fontproperties=chinese_font)
-                ax.set_ylabel("金额", fontproperties=chinese_font)
+                ax.set_title("数据分布对比")
+                ax.set_ylabel("金额")
                 ax.grid(True, linestyle='--', alpha=0.7)
-                for label in ax.get_xticklabels():
-                    label.set_fontproperties(chinese_font)
                 st.pyplot(fig)
 
             # 面积图
@@ -232,18 +233,14 @@ if uploaded_file is not None:
                 ax.set_xticks(range(len(x_labels)))
                 ax.set_xticklabels(x_labels, rotation=45, ha='right')
 
-                ax.set_title("累积趋势对比", fontproperties=chinese_font)
-                ax.set_xlabel(category_col, fontproperties=chinese_font)
-                ax.set_ylabel("金额(元)", fontproperties=chinese_font)
-                ax.legend(prop=chinese_font)
+                ax.set_title("累积趋势对比")
+                ax.set_xlabel(category_col)
+                ax.set_ylabel("金额(元)")
+                ax.legend()
                 ax.grid(True, linestyle='--', alpha=0.7)
-
-                for label in ax.get_xticklabels():
-                    label.set_fontproperties(chinese_font)
-
                 st.pyplot(fig)
 
-            # AI 分析（使用 API_KEY）
+            # AI 分析
             if api_ready and API_KEY:
                 with st.spinner("🤖 AI 正在分析中..."):
                     try:
