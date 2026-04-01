@@ -95,7 +95,7 @@ if uploaded_file is not None:
         col2 = st.selectbox("选择利润列", numeric_cols, index=min(1, len(numeric_cols)-1))
 
 #选择类别列  
-        all+cols = df.columns.tolist()
+        all_cols = df.columns.tolist()
         category_col = st.selectbox("选择类别列(如月份,地区)",all_cols,index=0)
 
 #图表类型选择
