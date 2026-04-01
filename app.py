@@ -113,7 +113,7 @@ if uploaded_file is not None:
             avg_a = df[col1].mean()
             total_b = df[col2].sum()
             avg_b = df[col2].mean()
-            #max_month = df[df[col1] == df[col1].max()].iloc[0, 0] if len(df) > 0 else "无"
+            max_month = df[df[col1] == df[col1].max()].iloc[0, 0] if len(df) > 0 else "无"
 
 #统计卡片
             col_a, col_b, col_c, col_d = st.columns(4)
