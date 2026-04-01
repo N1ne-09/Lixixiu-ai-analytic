@@ -5,12 +5,8 @@ import streamlit as st
 import json
 
 # 设置中文字体
-plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei','PingFang SC','Hiragino Sans GB']
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans CJK SC', 'WenQuanYi Zen Hei', 'DejaVu Sans']
 plt.rcParams['axes.unicode_minus'] = False
-# 尝试使用多种中文字体
-plt.rcParams['font.sans-serif'] = ['Noto Sans CJK SC', 'WenQuanYi Zen Hei', 'SimHei', 'Microsoft YaHei', 'DejaVu Sans']
-plt.rcParams['axes.unicode_minus'] = False
-
 
 st.set_page_config(page_title="AI数据分析工具", layout="wide")
 st.title("📊 AI 智能数据分析工具")
@@ -49,15 +45,15 @@ def read_file(uploaded_file):
     file_name = uploaded_file.name.lower()
 
     if file_name.endswith('.csv'):
-        #csv文件
+        # csv文件
         try:
-            return pd.read_csv(uploaded_file,encoding='gbk')
+            return pd.read_csv(uploaded_file, encoding='gbk')
         except:
-            return pd.read_csv(uploaded_file,encoding='utf-8')
+            return pd.read_csv(uploaded_file, encoding='utf-8')
     elif file_name.endswith('.xlsx'):
         return pd.read_excel(uploaded_file)
     elif file_name.endswith('.xls'):
-        return pd.read_excel(uploaded_file,engine='xlrd')
+        return pd.read_excel(uploaded_file, engine='xlrd')
     elif file_name.endswith('.json'):
         import json
         content = uploaded_file.getvalue().decode('utf-8')
@@ -66,24 +62,20 @@ def read_file(uploaded_file):
     elif file_name.endswith('.parquet'):
         return pd.read_parquet(uploaded_file)
     elif file_name.endswith('.tsv'):
-        return pd.read_csv(uploaded_file,sep='\t')
+        return pd.read_csv(uploaded_file, sep='\t')
     else:
         st.error(f"不支持的文件格式:{file_name}")
-
         return None
 
-
-
-
 # 主区域：文件上传
-uploaded_file = st.file_uploader("上传 CSV 文件", type=['csv', 'xlsx','json','xls','parquet','tsv'])
+uploaded_file = st.file_uploader("上传数据文件", type=['csv', 'xlsx', 'json', 'xls', 'parquet', 'tsv'])
 
 if uploaded_file is not None:
     # 读取文件使用read_file读取各种文件
     try:
         df = read_file(uploaded_file)
         if df is None:
-            st.stop
+            st.stop()
     except Exception as e:
         st.error(f"读取文件失败：{e}")
         st.stop()
@@ -98,19 +90,16 @@ if uploaded_file is not None:
         col1 = st.selectbox("选择销售额列", numeric_cols, index=0)
         col2 = st.selectbox("选择利润列", numeric_cols, index=min(1, len(numeric_cols)-1))
 
-#选择类别列  
+        # 选择类别列  
         all_cols = df.columns.tolist()
-        category_col = st.selectbox("选择类别列(如月份,地区)",all_cols,index=0)
+        category_col = st.selectbox("选择类别列(如月份,地区)", all_cols, index=0)
 
-#图表类型选择
-        chart_type =st.multiselect(
+        # 图表类型选择
+        chart_type = st.multiselect(
             "选择要显示的图表",
-            ["柱状图","折线图","饼图","箱线图","面积图"],
-            default=["柱状图","折线图"]
+            ["柱状图", "折线图", "饼图", "箱线图", "面积图"],
+            default=["柱状图", "折线图"]
         )
-
-
-
 
         if st.button("🔍 开始分析", type="primary"):
             total_a = df[col1].sum()
@@ -119,7 +108,7 @@ if uploaded_file is not None:
             avg_b = df[col2].mean()
             max_month = df[df[col1] == df[col1].max()].iloc[0, 0] if len(df) > 0 else "无"
 
-#统计卡片
+            # 统计卡片
             col_a, col_b, col_c, col_d = st.columns(4)
             with col_a:
                 st.metric(f"总{col1}", f"{total_a:,.0f}")
@@ -130,8 +119,7 @@ if uploaded_file is not None:
             with col_d:
                 st.metric(f"平均{col2}", f"{avg_b:,.0f}")
 
-
-            #柱状图
+            # 柱状图
             if "柱状图" in chart_type:
                 st.subheader("📊 柱状图")
                 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
@@ -150,8 +138,7 @@ if uploaded_file is not None:
                 plt.tight_layout()
                 st.pyplot(fig)
 
-
-            #折线图
+            # 折线图
             if "折线图" in chart_type:
                 st.subheader("📈 折线图")
                 fig, ax = plt.subplots(figsize=(10, 5))
@@ -165,8 +152,6 @@ if uploaded_file is not None:
                 ax.grid(True, linestyle='--', alpha=0.7)
                 plt.xticks(rotation=45)
                 st.pyplot(fig)
-
-
 
             # 饼图
             if "饼图" in chart_type:
@@ -205,10 +190,8 @@ if uploaded_file is not None:
                 ax.plot(range(len(x_labels)), df[col1], marker='o', color='steelblue')
                 ax.plot(range(len(x_labels)), df[col2], marker='s', color='coral')
 
-
                 ax.set_xticks(range(len(x_labels)))
-                ax.set_xticklabels(x_labels, rotation=45,ha='right')
-
+                ax.set_xticklabels(x_labels, rotation=45, ha='right')
 
                 ax.set_title("累积趋势对比")
                 ax.set_xlabel(category_col)
@@ -216,8 +199,6 @@ if uploaded_file is not None:
                 ax.legend()
                 ax.grid(True, linestyle='--', alpha=0.7)
                 st.pyplot(fig)
-
-
 
             # AI 分析（使用 API_KEY）
             if api_ready and API_KEY:
@@ -259,4 +240,4 @@ if uploaded_file is not None:
     else:
         st.error("请确保数据包含至少两列数值型数据（如销售额、利润）")
 else:
-    st.info("👈 请先上传 CSV 文件开始分析")
+    st.info("👈 请先上传数据文件开始分析")
