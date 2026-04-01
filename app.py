@@ -202,7 +202,7 @@ if uploaded_file is not None:
                 ax.plot(range(len(x_labels)), df[col2], marker='s', color='coral')
 
 
-                ax.set_xticks(range(x_pos))
+                ax.set_xticks(range(len(x_labels)))
                 ax.set_xticklabels(x_labels, rotation=45,ha='right')
 
 
