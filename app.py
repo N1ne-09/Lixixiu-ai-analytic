@@ -11,7 +11,7 @@ plt.rcParams['axes.unicode_minus'] = False
 st.set_page_config(page_title="AI数据分析工具", layout="wide")
 st.title("📊 AI 智能数据分析工具")
 
-# 获取 API Key（兼容本地和云端）
+# 获取 API Key
 if hasattr(st, 'secrets') and "api_key" in st.secrets:
     API_KEY = st.secrets["api_key"]
     api_ready = True
@@ -33,13 +33,13 @@ with st.sidebar:
             st.warning("⚠️ 请输入 API Key 以使用 AI 分析")
     st.markdown("---")
     st.markdown("### 使用说明")
-    st.markdown("1. 上传文件（支持 CSV、Excel、JSON、Parquet、TSV）")
+    st.markdown("1. 上传 CSV/Excel/JSON 文件")
     st.markdown("2. 选择销售额和利润列")
     st.markdown("3. 点击分析按钮")
     st.markdown("4. 查看统计、图表和 AI 建议")
 
 def read_file(uploaded_file):
-    """根据文件拓展名读取不同格式文件"""
+    """读取不同格式文件"""
     file_name = uploaded_file.name.lower()
 
     if file_name.endswith('.csv'):
@@ -60,7 +60,7 @@ def read_file(uploaded_file):
     elif file_name.endswith('.tsv'):
         return pd.read_csv(uploaded_file, sep='\t')
     else:
-        st.error(f"不支持的文件格式:{file_name}")
+        st.error(f"不支持的文件格式: {file_name}")
         return None
 
 uploaded_file = st.file_uploader("上传文件", type=['csv', 'xlsx', 'json', 'xls', 'parquet', 'tsv'])
@@ -82,28 +82,27 @@ if uploaded_file is not None:
 
     numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
     if len(numeric_cols) >= 2:
-        col1 = st.selectbox("选择数值列 A（如销售额）", numeric_cols, index=0)
-        col2 = st.selectbox("选择数值列 B（如利润）", numeric_cols, index=min(1, len(numeric_cols)-1))
+        col1 = st.selectbox("选择销售额列", numeric_cols, index=0)
+        col2 = st.selectbox("选择利润列", numeric_cols, index=min(1, len(numeric_cols)-1))
 
         if st.button("🔍 开始分析", type="primary"):
-            total_a = df[col1].sum()
-            avg_a = df[col1].mean()
-            total_b = df[col2].sum()
-            avg_b = df[col2].mean()
-            max_category = df[df[col1] == df[col1].max()].iloc[0, 0] if len(df) > 0 else "无"
+            total_sales = df[col1].sum()
+            avg_sales = df[col1].mean()
+            total_profit = df[col2].sum()
+            avg_profit = df[col2].mean()
+            max_month = df[df[col1] == df[col1].max()].iloc[0, 0] if len(df) > 0 else "无"
 
             col_a, col_b, col_c, col_d = st.columns(4)
             with col_a:
-                st.metric(f"总{col1}", f"{total_a:,.0f}")
+                st.metric("总销售额", f"{total_sales:,.0f}")
             with col_b:
-                st.metric(f"平均{col1}", f"{avg_a:,.0f}")
+                st.metric("平均销售额", f"{avg_sales:,.0f}")
             with col_c:
-                st.metric(f"总{col2}", f"{total_b:,.0f}")
+                st.metric("总利润", f"{total_profit:,.0f}")
             with col_d:
-                st.metric(f"平均{col2}", f"{avg_b:,.0f}")
+                st.metric("平均利润", f"{avg_profit:,.0f}")
 
             # 柱状图
-            st.subheader("📊 柱状图")
             fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
             x_labels = df.iloc[:, 0].astype(str)
 
@@ -123,9 +122,7 @@ if uploaded_file is not None:
             st.pyplot(fig)
 
             # 折线图
-            st.subheader("📈 折线图")
             fig, ax = plt.subplots(figsize=(10, 5))
-            x_labels = df.iloc[:, 0].astype(str)
             ax.plot(x_labels, df[col1], marker='o', label=col1, linewidth=2)
             ax.plot(x_labels, df[col2], marker='s', label=col2, linewidth=2)
             ax.set_title("趋势对比")
@@ -150,11 +147,11 @@ if uploaded_file is not None:
 {df.to_string()}
 
 统计结果：
-- 总{col1}：{total_a} 元
-- 平均{col1}：{avg_a} 元
-- 总{col2}：{total_b} 元
-- 平均{col2}：{avg_b} 元
-- {col1}最高的类别：{max_category}
+- 总销售额：{total_sales} 元
+- 平均销售额：{avg_sales} 元
+- 总利润：{total_profit} 元
+- 平均利润：{avg_profit} 元
+- 销售额最高的月份：{max_month}
 
 请根据以上数据，给出3条业务建议和分析洞察。
 """
@@ -172,8 +169,8 @@ if uploaded_file is not None:
                     except Exception as e:
                         st.error(f"AI 分析出错：{e}")
             else:
-                st.warning("⚠️ 请先在左侧输入 API Key 以获取 AI 分析")
+                st.warning("⚠️ 请先输入 API Key 以获取 AI 分析")
     else:
-        st.error("请确保数据包含至少两列数值型数据（如销售额、利润）")
+        st.error("请确保数据包含至少两列数值型数据")
 else:
     st.info("👈 请先上传文件开始分析")
