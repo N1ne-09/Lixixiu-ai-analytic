@@ -7,21 +7,32 @@ import os
 import matplotlib.font_manager as fm
 
 # ========== 中文字体设置（修复 Cloud 环境方框问题）==========
-# 方法1：直接设置字体列表
+# 获取一个可用的中文字体对象（用于显式指定）
+chinese_font = None
+try:
+    # 尝试获取系统中的中文字体
+    font_names = ['SimHei', 'Microsoft YaHei', 'PingFang SC', 'WenQuanYi Zen Hei', 'Noto Sans CJK SC']
+    for font_name in font_names:
+        try:
+            chinese_font = fm.FontProperties(family=font_name)
+            print(f"✅ 使用字体: {font_name}")
+            break
+        except:
+            continue
+
+    # 如果上面都没找到，尝试加载文泉驿字体文件
+    if chinese_font is None:
+        wqy_path = '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc'
+        if os.path.exists(wqy_path):
+            fm.fontManager.addfont(wqy_path)
+            chinese_font = fm.FontProperties(fname=wqy_path)
+            print(f"✅ 加载字体文件: {wqy_path}")
+except Exception as e:
+    print(f"字体加载失败: {e}")
+
+# 设置全局默认字体
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans CJK SC', 'WenQuanYi Zen Hei', 'DejaVu Sans']
 plt.rcParams['axes.unicode_minus'] = False
-
-# 方法2：尝试加载系统字体（针对 Streamlit Cloud）
-try:
-    # 检查是否存在文泉驿字体
-    wqy_path = '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc'
-    if os.path.exists(wqy_path):
-        fm.fontManager.addfont(wqy_path)
-        prop = fm.FontProperties(fname=wqy_path)
-        plt.rcParams['font.sans-serif'] = [prop.get_name()]
-        print(f"✅ 已加载字体: {prop.get_name()}")
-except Exception as e:
-    print(f"字体加载跳过: {e}")
 
 st.set_page_config(page_title="AI数据分析工具", layout="wide")
 st.title("📊 AI 智能数据分析工具")
@@ -90,7 +101,7 @@ if uploaded_file is not None:
     try:
         df = read_file(uploaded_file)
         if df is None:
-            st.stop()  # 修复：添加括号
+            st.stop()
     except Exception as e:
         st.error(f"读取文件失败：{e}")
         st.stop()
@@ -135,102 +146,102 @@ if uploaded_file is not None:
                 st.metric(f"平均{col2}", f"{avg_b:,.0f}")
 
             # 柱状图
-if "柱状图" in chart_type:
-    st.subheader("📊 柱状图")
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
-    x_labels = df.iloc[:, 0].astype(str)
-    ax1.bar(x_labels, df[col1], color='steelblue')
-    ax1.set_title(f"{col1} 分布", fontproperties=chinese_font)
-    ax1.set_xlabel("类别", fontproperties=chinese_font)
-    ax1.set_ylabel(col1, fontproperties=chinese_font)
-    ax1.tick_params(axis='x', rotation=45)
-    for label in ax1.get_xticklabels():
-        label.set_fontproperties(chinese_font)
+            if "柱状图" in chart_type:
+                st.subheader("📊 柱状图")
+                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+                x_labels = df.iloc[:, 0].astype(str)
+                ax1.bar(x_labels, df[col1], color='steelblue')
+                ax1.set_title(f"{col1} 分布", fontproperties=chinese_font)
+                ax1.set_xlabel("类别", fontproperties=chinese_font)
+                ax1.set_ylabel(col1, fontproperties=chinese_font)
+                ax1.tick_params(axis='x', rotation=45)
+                for label in ax1.get_xticklabels():
+                    label.set_fontproperties(chinese_font)
 
-    ax2.bar(x_labels, df[col2], color='coral')
-    ax2.set_title(f"{col2} 分布", fontproperties=chinese_font)
-    ax2.set_xlabel("类别", fontproperties=chinese_font)
-    ax2.set_ylabel(col2, fontproperties=chinese_font)
-    ax2.tick_params(axis='x', rotation=45)
-    for label in ax2.get_xticklabels():
-        label.set_fontproperties(chinese_font)
+                ax2.bar(x_labels, df[col2], color='coral')
+                ax2.set_title(f"{col2} 分布", fontproperties=chinese_font)
+                ax2.set_xlabel("类别", fontproperties=chinese_font)
+                ax2.set_ylabel(col2, fontproperties=chinese_font)
+                ax2.tick_params(axis='x', rotation=45)
+                for label in ax2.get_xticklabels():
+                    label.set_fontproperties(chinese_font)
 
-    plt.tight_layout()
-    st.pyplot(fig)
+                plt.tight_layout()
+                st.pyplot(fig)
 
-# 折线图
-if "折线图" in chart_type:
-    st.subheader("📈 折线图")
-    fig, ax = plt.subplots(figsize=(10, 5))
-    x_labels = df[category_col].astype(str)
-    ax.plot(x_labels, df[col1], marker='o', label=col1, linewidth=2)
-    ax.plot(x_labels, df[col2], marker='s', label=col2, linewidth=2)
-    ax.set_title("趋势对比", fontproperties=chinese_font)
-    ax.set_xlabel("类别", fontproperties=chinese_font)
-    ax.set_ylabel("金额", fontproperties=chinese_font)
-    ax.legend(prop=chinese_font)
-    ax.grid(True, linestyle='--', alpha=0.7)
-    plt.xticks(rotation=45)
-    for label in ax.get_xticklabels():
-        label.set_fontproperties(chinese_font)
-    st.pyplot(fig)
+            # 折线图
+            if "折线图" in chart_type:
+                st.subheader("📈 折线图")
+                fig, ax = plt.subplots(figsize=(10, 5))
+                x_labels = df[category_col].astype(str)
+                ax.plot(x_labels, df[col1], marker='o', label=col1, linewidth=2)
+                ax.plot(x_labels, df[col2], marker='s', label=col2, linewidth=2)
+                ax.set_title("趋势对比", fontproperties=chinese_font)
+                ax.set_xlabel("类别", fontproperties=chinese_font)
+                ax.set_ylabel("金额", fontproperties=chinese_font)
+                ax.legend(prop=chinese_font)
+                ax.grid(True, linestyle='--', alpha=0.7)
+                plt.xticks(rotation=45)
+                for label in ax.get_xticklabels():
+                    label.set_fontproperties(chinese_font)
+                st.pyplot(fig)
 
-# 饼图
-if "饼图" in chart_type:
-    st.subheader("🥧 饼图")
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
-    x_labels = df[category_col].astype(str)
+            # 饼图
+            if "饼图" in chart_type:
+                st.subheader("🥧 饼图")
+                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+                x_labels = df[category_col].astype(str)
 
-    patches1, texts1, autotexts1 = ax1.pie(df[col1], labels=x_labels, autopct='%1.1f%%')
-    ax1.set_title(f"{col1} 占比", fontproperties=chinese_font)
-    for text in texts1:
-        text.set_fontproperties(chinese_font)
+                patches1, texts1, autotexts1 = ax1.pie(df[col1], labels=x_labels, autopct='%1.1f%%')
+                ax1.set_title(f"{col1} 占比", fontproperties=chinese_font)
+                for text in texts1:
+                    text.set_fontproperties(chinese_font)
 
-    patches2, texts2, autotexts2 = ax2.pie(df[col2], labels=x_labels, autopct='%1.1f%%')
-    ax2.set_title(f"{col2} 占比", fontproperties=chinese_font)
-    for text in texts2:
-        text.set_fontproperties(chinese_font)
+                patches2, texts2, autotexts2 = ax2.pie(df[col2], labels=x_labels, autopct='%1.1f%%')
+                ax2.set_title(f"{col2} 占比", fontproperties=chinese_font)
+                for text in texts2:
+                    text.set_fontproperties(chinese_font)
 
-    st.pyplot(fig)
+                st.pyplot(fig)
 
-# 箱线图
-if "箱线图" in chart_type:
-    st.subheader("📦 箱线图（数据分布）")
-    fig, ax = plt.subplots(figsize=(10, 5))
-    data_to_plot = [df[col1], df[col2]]
-    bp = ax.boxplot(data_to_plot, labels=[col1, col2], patch_artist=True)
-    bp['boxes'][0].set_facecolor('steelblue')
-    bp['boxes'][1].set_facecolor('coral')
-    ax.set_title("数据分布对比", fontproperties=chinese_font)
-    ax.set_ylabel("金额", fontproperties=chinese_font)
-    ax.grid(True, linestyle='--', alpha=0.7)
-    for label in ax.get_xticklabels():
-        label.set_fontproperties(chinese_font)
-    st.pyplot(fig)
+            # 箱线图
+            if "箱线图" in chart_type:
+                st.subheader("📦 箱线图（数据分布）")
+                fig, ax = plt.subplots(figsize=(10, 5))
+                data_to_plot = [df[col1], df[col2]]
+                bp = ax.boxplot(data_to_plot, labels=[col1, col2], patch_artist=True)
+                bp['boxes'][0].set_facecolor('steelblue')
+                bp['boxes'][1].set_facecolor('coral')
+                ax.set_title("数据分布对比", fontproperties=chinese_font)
+                ax.set_ylabel("金额", fontproperties=chinese_font)
+                ax.grid(True, linestyle='--', alpha=0.7)
+                for label in ax.get_xticklabels():
+                    label.set_fontproperties(chinese_font)
+                st.pyplot(fig)
 
-# 面积图
-if "面积图" in chart_type:
-    st.subheader("📊 面积图（累积趋势）")
-    fig, ax = plt.subplots(figsize=(10, 5))
-    x_labels = df[category_col].astype(str)
-    ax.fill_between(range(len(x_labels)), df[col1], alpha=0.5, label=col1, color='steelblue')
-    ax.fill_between(range(len(x_labels)), df[col2], alpha=0.5, label=col2, color='coral')
-    ax.plot(range(len(x_labels)), df[col1], marker='o', color='steelblue')
-    ax.plot(range(len(x_labels)), df[col2], marker='s', color='coral')
+            # 面积图
+            if "面积图" in chart_type:
+                st.subheader("📊 面积图（累积趋势）")
+                fig, ax = plt.subplots(figsize=(10, 5))
+                x_labels = df[category_col].astype(str)
+                ax.fill_between(range(len(x_labels)), df[col1], alpha=0.5, label=col1, color='steelblue')
+                ax.fill_between(range(len(x_labels)), df[col2], alpha=0.5, label=col2, color='coral')
+                ax.plot(range(len(x_labels)), df[col1], marker='o', color='steelblue')
+                ax.plot(range(len(x_labels)), df[col2], marker='s', color='coral')
 
-    ax.set_xticks(range(len(x_labels)))
-    ax.set_xticklabels(x_labels, rotation=45, ha='right')
+                ax.set_xticks(range(len(x_labels)))
+                ax.set_xticklabels(x_labels, rotation=45, ha='right')
 
-    ax.set_title("累积趋势对比", fontproperties=chinese_font)
-    ax.set_xlabel(category_col, fontproperties=chinese_font)
-    ax.set_ylabel("金额(元)", fontproperties=chinese_font)
-    ax.legend(prop=chinese_font)
-    ax.grid(True, linestyle='--', alpha=0.7)
+                ax.set_title("累积趋势对比", fontproperties=chinese_font)
+                ax.set_xlabel(category_col, fontproperties=chinese_font)
+                ax.set_ylabel("金额(元)", fontproperties=chinese_font)
+                ax.legend(prop=chinese_font)
+                ax.grid(True, linestyle='--', alpha=0.7)
 
-    for label in ax.get_xticklabels():
-        label.set_fontproperties(chinese_font)
+                for label in ax.get_xticklabels():
+                    label.set_fontproperties(chinese_font)
 
-    st.pyplot(fig)
+                st.pyplot(fig)
 
             # AI 分析（使用 API_KEY）
             if api_ready and API_KEY:
