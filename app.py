@@ -128,39 +128,39 @@ if uploaded_file is not None:
 
 
             #柱状图
-        if "柱状图" in chart_type:
+            if "柱状图" in chart_type:
                 st.subheader("📊 柱状图")
-            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
-            x_labels = df.iloc[:, 0].astype(str)
-            ax1.bar(x_labels, df[col1], color='steelblue')
-            ax1.set_title(f"{col1} 分布")
-            ax1.set_xlabel("类别")
-            ax1.set_ylabel(col1)
-            ax1.tick_params(axis='x', rotation=45)
+                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+                x_labels = df.iloc[:, 0].astype(str)
+                ax1.bar(x_labels, df[col1], color='steelblue')
+                ax1.set_title(f"{col1} 分布")
+                ax1.set_xlabel("类别")
+                ax1.set_ylabel(col1)
+                ax1.tick_params(axis='x', rotation=45)
 
-            ax2.bar(x_labels, df[col2], color='coral')
-            ax2.set_title(f"{col2} 分布")
-            ax2.set_xlabel("类别")
-            ax2.set_ylabel(col2)
-            ax2.tick_params(axis='x', rotation=45)
-            plt.tight_layout()
-            st.pyplot(fig)
+                ax2.bar(x_labels, df[col2], color='coral')
+                ax2.set_title(f"{col2} 分布")
+                ax2.set_xlabel("类别")
+                ax2.set_ylabel(col2)
+                ax2.tick_params(axis='x', rotation=45)
+                plt.tight_layout()
+                st.pyplot(fig)
 
 
             #折线图
-        if "折线图" in chart_type:
+            if "折线图" in chart_type:
                 st.subheader("📈 折线图")
-            fig, ax = plt.subplots(figsize=(10, 5))
-            x_labels = df[category_col].astype(str)
-            ax.plot(x_labels, df[col1], marker='o', label=col1, linewidth=2)
-            ax.plot(x_labels, df[col2], marker='s', label=col2, linewidth=2)
-            ax.set_title("趋势对比")
-            ax.set_xlabel("类别")
-            ax.set_ylabel("金额")
-            ax.legend()
-            ax.grid(True, linestyle='--', alpha=0.7)
-            plt.xticks(rotation=45)
-            st.pyplot(fig)
+                fig, ax = plt.subplots(figsize=(10, 5))
+                x_labels = df[category_col].astype(str)
+                ax.plot(x_labels, df[col1], marker='o', label=col1, linewidth=2)
+                ax.plot(x_labels, df[col2], marker='s', label=col2, linewidth=2)
+                ax.set_title("趋势对比")
+                ax.set_xlabel("类别")
+                ax.set_ylabel("金额")
+                ax.legend()
+                ax.grid(True, linestyle='--', alpha=0.7)
+                plt.xticks(rotation=45)
+                st.pyplot(fig)
 
 
 
