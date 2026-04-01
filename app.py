@@ -3,10 +3,25 @@ import matplotlib.pyplot as plt
 from openai import OpenAI
 import streamlit as st
 import json
+import os
+import matplotlib.font_manager as fm
 
-# 设置中文字体
+# ========== 中文字体设置（修复 Cloud 环境方框问题）==========
+# 方法1：直接设置字体列表
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans CJK SC', 'WenQuanYi Zen Hei', 'DejaVu Sans']
 plt.rcParams['axes.unicode_minus'] = False
+
+# 方法2：尝试加载系统字体（针对 Streamlit Cloud）
+try:
+    # 检查是否存在文泉驿字体
+    wqy_path = '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc'
+    if os.path.exists(wqy_path):
+        fm.fontManager.addfont(wqy_path)
+        prop = fm.FontProperties(fname=wqy_path)
+        plt.rcParams['font.sans-serif'] = [prop.get_name()]
+        print(f"✅ 已加载字体: {prop.get_name()}")
+except Exception as e:
+    print(f"字体加载跳过: {e}")
 
 st.set_page_config(page_title="AI数据分析工具", layout="wide")
 st.title("📊 AI 智能数据分析工具")
@@ -75,7 +90,7 @@ if uploaded_file is not None:
     try:
         df = read_file(uploaded_file)
         if df is None:
-            st.stop()
+            st.stop()  # 修复：添加括号
     except Exception as e:
         st.error(f"读取文件失败：{e}")
         st.stop()
