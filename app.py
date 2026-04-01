@@ -39,7 +39,7 @@ with st.sidebar:
     st.markdown("3. 点击分析按钮")
     st.markdown("4. 查看统计、图表和 AI 建议")
 
-def read_file(uploaded_file):
+def read_file(upload_file):
     """根据文件拓展名读取不同格式文件"""
     file_name = upload_file.name.lower()
 
