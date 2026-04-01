@@ -225,10 +225,10 @@ if uploaded_file is not None:
 {df.to_string()}
 
 统计结果：
-- 总{col1}：{total_sales} 元
-- 平均{col1}：{avg_sales} 元
-- 总{col2}：{total_profit} 元
-- 平均{col2}：{avg_profit} 元
+- 总{col1}：{total_a} 元
+- 平均{col1}：{avg_a} 元
+- 总{col2}：{total_b} 元
+- 平均{col2}：{avg_b} 元
 - {col1}最高的行：{max_month}
 
 请根据以上数据，给出3条业务建议和分析洞察。
