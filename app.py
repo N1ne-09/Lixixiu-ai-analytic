@@ -3,56 +3,9 @@ import matplotlib.pyplot as plt
 from openai import OpenAI
 import streamlit as st
 import json
-import os
-import matplotlib.font_manager as fm
 
-# ========== 强制中文字体设置（终极方案）==========
-# 方法1：尝试多个可能的字体文件路径
-font_paths = [
-    '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc',  # 文泉驿微米黑
-    '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc',    # 文泉驿正黑
-    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',  # DejaVu
-    '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
-]
-
-chinese_font = None
-font_loaded = False
-
-# 遍历所有可能的字体路径
-for font_path in font_paths:
-    if os.path.exists(font_path):
-        try:
-            fm.fontManager.addfont(font_path)
-            chinese_font = fm.FontProperties(fname=font_path)
-            plt.rcParams['font.family'] = chinese_font.get_name()
-            plt.rcParams['axes.unicode_minus'] = False
-            font_loaded = True
-            print(f"✅ 成功加载字体: {font_path}")
-            break
-        except Exception as e:
-            print(f"加载 {font_path} 失败: {e}")
-
-# 如果没有找到字体文件，尝试使用字体名称
-if not font_loaded:
-    font_names = ['WenQuanYi Micro Hei', 'WenQuanYi Zen Hei', 'Noto Sans CJK SC', 'SimHei', 'DejaVu Sans']
-    for font_name in font_names:
-        try:
-            chinese_font = fm.FontProperties(family=font_name)
-            plt.rcParams['font.family'] = font_name
-            plt.rcParams['axes.unicode_minus'] = False
-            font_loaded = True
-            print(f"✅ 使用字体名称: {font_name}")
-            break
-        except:
-            continue
-
-# 如果还是不行，强制设置字体（最后一个备选）
-if not font_loaded:
-    plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
-    plt.rcParams['axes.unicode_minus'] = False
-    print("⚠️ 使用默认字体")
-
-# 设置全局字体
+# 设置中文字体（之前能正常显示的版本）
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB']
 plt.rcParams['axes.unicode_minus'] = False
 
 st.set_page_config(page_title="AI数据分析工具", layout="wide")
@@ -60,9 +13,11 @@ st.title("📊 AI 智能数据分析工具")
 
 # 获取 API Key（兼容本地和云端）
 if hasattr(st, 'secrets') and "api_key" in st.secrets:
+    # 云端运行：从 secrets 读取
     API_KEY = st.secrets["api_key"]
     api_ready = True
 else:
+    # 本地运行：让用户输入
     API_KEY = None
     api_ready = False
 
@@ -90,6 +45,7 @@ def read_file(uploaded_file):
     file_name = uploaded_file.name.lower()
 
     if file_name.endswith('.csv'):
+        # csv文件
         try:
             return pd.read_csv(uploaded_file, encoding='gbk')
         except:
@@ -115,6 +71,7 @@ def read_file(uploaded_file):
 uploaded_file = st.file_uploader("上传数据文件", type=['csv', 'xlsx', 'json', 'xls', 'parquet', 'tsv'])
 
 if uploaded_file is not None:
+    # 读取文件使用read_file读取各种文件
     try:
         df = read_file(uploaded_file)
         if df is None:
@@ -133,9 +90,11 @@ if uploaded_file is not None:
         col1 = st.selectbox("选择销售额列", numeric_cols, index=0)
         col2 = st.selectbox("选择利润列", numeric_cols, index=min(1, len(numeric_cols)-1))
 
+        # 选择类别列  
         all_cols = df.columns.tolist()
         category_col = st.selectbox("选择类别列(如月份,地区)", all_cols, index=0)
 
+        # 图表类型选择
         chart_type = st.multiselect(
             "选择要显示的图表",
             ["柱状图", "折线图", "饼图", "箱线图", "面积图"],
@@ -149,6 +108,7 @@ if uploaded_file is not None:
             avg_b = df[col2].mean()
             max_month = df[df[col1] == df[col1].max()].iloc[0, 0] if len(df) > 0 else "无"
 
+            # 统计卡片
             col_a, col_b, col_c, col_d = st.columns(4)
             with col_a:
                 st.metric(f"总{col1}", f"{total_a:,.0f}")
@@ -240,7 +200,7 @@ if uploaded_file is not None:
                 ax.grid(True, linestyle='--', alpha=0.7)
                 st.pyplot(fig)
 
-            # AI 分析
+            # AI 分析（使用 API_KEY）
             if api_ready and API_KEY:
                 with st.spinner("🤖 AI 正在分析中..."):
                     try:
