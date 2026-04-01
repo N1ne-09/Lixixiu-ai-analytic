@@ -7,13 +7,9 @@ import json
 # 设置中文字体
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei','PingFang SC','Hiragino Sans GB']
 plt.rcParams['axes.unicode_minus'] = False
-try:
-    # Windows 黑体路径
-    font_path = 'C:/Windows/Fonts/simhei.ttf'
-    font_prop = fm.FontProperties(fname=font_path)
-    plt.rcParams['font.family'] = font_prop.get_name()
-except:
-    pass
+# 尝试使用多种中文字体
+plt.rcParams['font.sans-serif'] = ['Noto Sans CJK SC', 'WenQuanYi Zen Hei', 'SimHei', 'Microsoft YaHei', 'DejaVu Sans']
+plt.rcParams['axes.unicode_minus'] = False
 
 
 st.set_page_config(page_title="AI数据分析工具", layout="wide")
