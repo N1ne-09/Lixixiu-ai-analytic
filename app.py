@@ -5,8 +5,10 @@ import streamlit as st
 import json
 
 # 设置中文字体
-plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei']
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei','PingFang SC','Hiragino Sans GB']
 plt.rcParams['axes.unicode_minus'] = False
+
+
 
 st.set_page_config(page_title="AI数据分析工具", layout="wide")
 st.title("📊 AI 智能数据分析工具")
@@ -208,7 +210,7 @@ if uploaded_file is not None:
 
                 ax.set_title("累积趋势对比")
                 ax.set_xlabel(category_col)
-                ax.set_ylabel("金额")
+                ax.set_ylabel("金额(元)")
                 ax.legend()
                 ax.grid(True, linestyle='--', alpha=0.7)
                 st.pyplot(fig)
