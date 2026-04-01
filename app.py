@@ -55,7 +55,9 @@ def read_file(uploaded_file):
     elif file_name.endswith('.xls'):
         return pd.read_excel(uploaded_file,engine='xlrd')
     elif file_name.endswith('.json'):
-        data = json.load(uploaded_file)
+        import json
+        content = uploaded_file.getvalue().decode(''utf-8)
+        data = json.loads(content)
         return pd.json_normalize(data)
     elif file_name.endswith('.parquet'):
         return pd.read_parquet(uploaded_file)
