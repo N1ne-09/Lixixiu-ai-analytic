@@ -135,85 +135,102 @@ if uploaded_file is not None:
                 st.metric(f"平均{col2}", f"{avg_b:,.0f}")
 
             # 柱状图
-            if "柱状图" in chart_type:
-                st.subheader("📊 柱状图")
-                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
-                x_labels = df.iloc[:, 0].astype(str)
-                ax1.bar(x_labels, df[col1], color='steelblue')
-                ax1.set_title(f"{col1} 分布")
-                ax1.set_xlabel("类别")
-                ax1.set_ylabel(col1)
-                ax1.tick_params(axis='x', rotation=45)
+if "柱状图" in chart_type:
+    st.subheader("📊 柱状图")
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+    x_labels = df.iloc[:, 0].astype(str)
+    ax1.bar(x_labels, df[col1], color='steelblue')
+    ax1.set_title(f"{col1} 分布", fontproperties=chinese_font)
+    ax1.set_xlabel("类别", fontproperties=chinese_font)
+    ax1.set_ylabel(col1, fontproperties=chinese_font)
+    ax1.tick_params(axis='x', rotation=45)
+    for label in ax1.get_xticklabels():
+        label.set_fontproperties(chinese_font)
 
-                ax2.bar(x_labels, df[col2], color='coral')
-                ax2.set_title(f"{col2} 分布")
-                ax2.set_xlabel("类别")
-                ax2.set_ylabel(col2)
-                ax2.tick_params(axis='x', rotation=45)
-                plt.tight_layout()
-                st.pyplot(fig)
+    ax2.bar(x_labels, df[col2], color='coral')
+    ax2.set_title(f"{col2} 分布", fontproperties=chinese_font)
+    ax2.set_xlabel("类别", fontproperties=chinese_font)
+    ax2.set_ylabel(col2, fontproperties=chinese_font)
+    ax2.tick_params(axis='x', rotation=45)
+    for label in ax2.get_xticklabels():
+        label.set_fontproperties(chinese_font)
 
-            # 折线图
-            if "折线图" in chart_type:
-                st.subheader("📈 折线图")
-                fig, ax = plt.subplots(figsize=(10, 5))
-                x_labels = df[category_col].astype(str)
-                ax.plot(x_labels, df[col1], marker='o', label=col1, linewidth=2)
-                ax.plot(x_labels, df[col2], marker='s', label=col2, linewidth=2)
-                ax.set_title("趋势对比")
-                ax.set_xlabel("类别")
-                ax.set_ylabel("金额")
-                ax.legend()
-                ax.grid(True, linestyle='--', alpha=0.7)
-                plt.xticks(rotation=45)
-                st.pyplot(fig)
+    plt.tight_layout()
+    st.pyplot(fig)
 
-            # 饼图
-            if "饼图" in chart_type:
-                st.subheader("🥧 饼图")
-                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
-                x_labels = df[category_col].astype(str)
+# 折线图
+if "折线图" in chart_type:
+    st.subheader("📈 折线图")
+    fig, ax = plt.subplots(figsize=(10, 5))
+    x_labels = df[category_col].astype(str)
+    ax.plot(x_labels, df[col1], marker='o', label=col1, linewidth=2)
+    ax.plot(x_labels, df[col2], marker='s', label=col2, linewidth=2)
+    ax.set_title("趋势对比", fontproperties=chinese_font)
+    ax.set_xlabel("类别", fontproperties=chinese_font)
+    ax.set_ylabel("金额", fontproperties=chinese_font)
+    ax.legend(prop=chinese_font)
+    ax.grid(True, linestyle='--', alpha=0.7)
+    plt.xticks(rotation=45)
+    for label in ax.get_xticklabels():
+        label.set_fontproperties(chinese_font)
+    st.pyplot(fig)
 
-                ax1.pie(df[col1], labels=x_labels, autopct='%1.1f%%')
-                ax1.set_title(f"{col1} 占比")
+# 饼图
+if "饼图" in chart_type:
+    st.subheader("🥧 饼图")
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+    x_labels = df[category_col].astype(str)
 
-                ax2.pie(df[col2], labels=x_labels, autopct='%1.1f%%')
-                ax2.set_title(f"{col2} 占比")
+    patches1, texts1, autotexts1 = ax1.pie(df[col1], labels=x_labels, autopct='%1.1f%%')
+    ax1.set_title(f"{col1} 占比", fontproperties=chinese_font)
+    for text in texts1:
+        text.set_fontproperties(chinese_font)
 
-                st.pyplot(fig)
+    patches2, texts2, autotexts2 = ax2.pie(df[col2], labels=x_labels, autopct='%1.1f%%')
+    ax2.set_title(f"{col2} 占比", fontproperties=chinese_font)
+    for text in texts2:
+        text.set_fontproperties(chinese_font)
 
-            # 箱线图
-            if "箱线图" in chart_type:
-                st.subheader("📦 箱线图（数据分布）")
-                fig, ax = plt.subplots(figsize=(10, 5))
-                data_to_plot = [df[col1], df[col2]]
-                bp = ax.boxplot(data_to_plot, labels=[col1, col2], patch_artist=True)
-                bp['boxes'][0].set_facecolor('steelblue')
-                bp['boxes'][1].set_facecolor('coral')
-                ax.set_title("数据分布对比")
-                ax.set_ylabel("金额")
-                ax.grid(True, linestyle='--', alpha=0.7)
-                st.pyplot(fig)
+    st.pyplot(fig)
 
-            # 面积图
-            if "面积图" in chart_type:
-                st.subheader("📊 面积图（累积趋势）")
-                fig, ax = plt.subplots(figsize=(10, 5))
-                x_labels = df[category_col].astype(str)
-                ax.fill_between(range(len(x_labels)), df[col1], alpha=0.5, label=col1, color='steelblue')
-                ax.fill_between(range(len(x_labels)), df[col2], alpha=0.5, label=col2, color='coral')
-                ax.plot(range(len(x_labels)), df[col1], marker='o', color='steelblue')
-                ax.plot(range(len(x_labels)), df[col2], marker='s', color='coral')
+# 箱线图
+if "箱线图" in chart_type:
+    st.subheader("📦 箱线图（数据分布）")
+    fig, ax = plt.subplots(figsize=(10, 5))
+    data_to_plot = [df[col1], df[col2]]
+    bp = ax.boxplot(data_to_plot, labels=[col1, col2], patch_artist=True)
+    bp['boxes'][0].set_facecolor('steelblue')
+    bp['boxes'][1].set_facecolor('coral')
+    ax.set_title("数据分布对比", fontproperties=chinese_font)
+    ax.set_ylabel("金额", fontproperties=chinese_font)
+    ax.grid(True, linestyle='--', alpha=0.7)
+    for label in ax.get_xticklabels():
+        label.set_fontproperties(chinese_font)
+    st.pyplot(fig)
 
-                ax.set_xticks(range(len(x_labels)))
-                ax.set_xticklabels(x_labels, rotation=45, ha='right')
+# 面积图
+if "面积图" in chart_type:
+    st.subheader("📊 面积图（累积趋势）")
+    fig, ax = plt.subplots(figsize=(10, 5))
+    x_labels = df[category_col].astype(str)
+    ax.fill_between(range(len(x_labels)), df[col1], alpha=0.5, label=col1, color='steelblue')
+    ax.fill_between(range(len(x_labels)), df[col2], alpha=0.5, label=col2, color='coral')
+    ax.plot(range(len(x_labels)), df[col1], marker='o', color='steelblue')
+    ax.plot(range(len(x_labels)), df[col2], marker='s', color='coral')
 
-                ax.set_title("累积趋势对比")
-                ax.set_xlabel(category_col)
-                ax.set_ylabel("金额(元)")
-                ax.legend()
-                ax.grid(True, linestyle='--', alpha=0.7)
-                st.pyplot(fig)
+    ax.set_xticks(range(len(x_labels)))
+    ax.set_xticklabels(x_labels, rotation=45, ha='right')
+
+    ax.set_title("累积趋势对比", fontproperties=chinese_font)
+    ax.set_xlabel(category_col, fontproperties=chinese_font)
+    ax.set_ylabel("金额(元)", fontproperties=chinese_font)
+    ax.legend(prop=chinese_font)
+    ax.grid(True, linestyle='--', alpha=0.7)
+
+    for label in ax.get_xticklabels():
+        label.set_fontproperties(chinese_font)
+
+    st.pyplot(fig)
 
             # AI 分析（使用 API_KEY）
             if api_ready and API_KEY:
