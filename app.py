@@ -128,7 +128,7 @@ if uploaded_file is not None:
 
 
             #柱状图
-            if "柱状图" in chart_type:
+        if "柱状图" in chart_type:
                 st.subheader("📊 柱状图")
             fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
             x_labels = df.iloc[:, 0].astype(str)
@@ -148,7 +148,7 @@ if uploaded_file is not None:
 
 
             #折线图
-            if "折线图" in chart_type:
+        if "折线图" in chart_type:
                 st.subheader("📈 折线图")
             fig, ax = plt.subplots(figsize=(10, 5))
             x_labels = df[category_col].astype(str)
